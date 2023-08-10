@@ -27,7 +27,7 @@ const seed = async () => {
         {
             name: {
                 first: 'Bound',
-                last: 'James',
+                last: 'Js',
             },
             pseudo: '007',
             email: 'james007@gmail.com',

@@ -20,6 +20,11 @@ module.exports = {
                             bsonType: 'int',
                             description: 'Number must be an integer.',
                         },
+                        box: {
+                            bsonType: 'string',
+                            description:
+                                'Unit (building or apartment) must be a string.',
+                        },
                         postCode: {
                             bsonType: 'string',
                             description:
@@ -39,6 +44,7 @@ module.exports = {
                             description: 'Country must be a string.',
                         },
                     },
+                    required: ['street', 'city', 'postCode'],
                 },
                 geolocalisation: {
                     bsonType: 'object',

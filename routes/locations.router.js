@@ -16,11 +16,11 @@ router.get('/:id/full', controller.getLocationFull);
 router.post('/', controller.createLocation);
 
 //PATCH /locations/:id (verified)
-//router.patch('/:id', controller.updateLocation);
+router.patch('/:id', controller.updateLocation);
 
 //DELETE /locations/:id (verified)
-//router.delete('/:id', controller.deleteLocation);
+router.delete('/:id', controller.deleteLocation);
 
 //PATCH locations/:id/events/:eventId : Supprime un événement spécifique d'une location
-//router.patch('/:id/events/:eventId', controller.deleteEventFromLocation);
+router.patch('/:id/events', controller.modifyEventsForLocation);
 module.exports = router;
