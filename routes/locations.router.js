@@ -21,6 +21,6 @@ router.patch('/:id', controller.updateLocation);
 //DELETE /locations/:id (verified)
 router.delete('/:id', controller.deleteLocation);
 
-//PATCH locations/:id/events/:eventId : Supprime un événement spécifique d'une location
-router.patch('/:id/events', controller.modifyEventsForLocation);
+//PATCH locations/:id/events Supprime un événement spécifique d'une location
+//router.patch('/:id/events', controller.modifyEventsForLocation);
 module.exports = router;

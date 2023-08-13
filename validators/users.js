@@ -38,6 +38,9 @@ module.exports = {
                         nbr: {
                             bsonType: 'int',
                         },
+                        box: {
+                            bsonType: 'int',
+                        },
                         postCode: {
                             bsonType: 'string',
                         },

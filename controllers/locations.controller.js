@@ -16,13 +16,13 @@ exports.getLocationsAll = async (req, res) => {
 
 exports.getLocationsOne = async (req, res) => {
     const { id } = req.params;
-    if (!id) {
-        res.status(400).json({ message: 'No id provided' });
+    if (!id || !ObjectId.isValid(id)) {
+        return res.status(400).json({ message: 'No or invalid id provided' });
     }
     try {
         const data = await collection.findOne({ _id: new ObjectId(id) });
         if (!data) {
-            res.status(404).json({
+            return res.status(404).json({
                 message: `No Location found with id ${id}`,
             });
         }
@@ -35,8 +35,8 @@ exports.getLocationsOne = async (req, res) => {
 
 exports.getLocationFull = async (req, res) => {
     const { id } = req.params;
-    if (!id) {
-        res.status(400).json({ message: 'No id provided' });
+    if (!id || !ObjectId.isValid(id)) {
+        return res.status(400).json({ message: 'No or invalid id provided' });
     }
     try {
         const event = await collection
@@ -80,9 +80,9 @@ exports.getLocationFull = async (req, res) => {
             ])
             .toArray();
         if (event.length === 0) {
-            res.status(404).json({ message: 'Event not found' });
+            return res.status(404).json({ message: 'Event not found' });
         } else {
-            res.status(200).json(event[0]);
+            res.status(200).json(event);
         }
     } catch (error) {
         console.log(error);
@@ -134,15 +134,20 @@ exports.createLocation = async (req, res) => {
 exports.updateLocation = async (req, res) => {
     const { id } = req.params;
 
-    if (!id) {
-        return res.status(400).json({ message: 'No ID provided' });
+    if (!id || !ObjectId.isValid(id)) {
+        return res.status(400).json({ message: 'No or invalid id provided' });
     }
 
     const schema = Joi.object({
         name: Joi.string().max(100).optional(),
         address: Joi.object({
             street: Joi.string().optional(),
-            nbr: Joi.number().optional(),
+            nbr: Joi.when('box', {
+                is: Joi.exist(),
+                then: Joi.number().integer().required(),
+                otherwise: Joi.number().integer().optional(),
+            }),
+            box: Joi.string().optional(),
             postCode: Joi.string().optional(),
             city: Joi.string().optional(),
             district: Joi.string().optional(),
@@ -155,7 +160,7 @@ exports.updateLocation = async (req, res) => {
         }).optional(),
     })
         .min(1)
-        .unknown(false); // Refuse les champs non définis dans le schéma
+        .unknown(false);
 
     const { error, value } = schema.validate(req.body);
 
@@ -166,8 +171,7 @@ exports.updateLocation = async (req, res) => {
     try {
         const location = await collection.findOneAndUpdate(
             { _id: new ObjectId(id) },
-            { $set: { ...value, updatedAt: new Date() } },
-            { returnDocument: 'after' }
+            { $set: { ...value, updatedAt: new Date() } }
         );
 
         if (!location.value) {
@@ -182,33 +186,31 @@ exports.updateLocation = async (req, res) => {
 
 exports.deleteLocation = async (req, res) => {
     const { id } = req.params;
-    if (!id) {
-        return res.status(400).json({ message: 'No id provided' });
+    if (!id || !ObjectId.isValid(id)) {
+        return res.status(400).json({ message: 'No or invalid id provided' });
     }
 
     const { force } = req.query;
 
     try {
-        const locationExists = await collection.findOne({
-            _id: new ObjectId(id),
-        });
-        if (!locationExists) {
-            return res.status(404).json({ message: 'Location not found' });
-        }
-
         if (force === undefined || parseInt(force, 10) === 0) {
             // Suppression logique
             const data = await collection.updateOne(
                 { _id: new ObjectId(id) },
                 { $set: { deletedAt: new Date() } }
             );
-            return res.status(200).json(data);
+            if (data.matchedCount === 0) {
+                return res.status(404).json({ message: 'Location not found' });
+            }
+            return res
+                .status(200)
+                .json({ message: 'Location logically deleted successfully' });
         }
 
         if (parseInt(force, 10) === 1) {
             // Suppression physique
             await collection.deleteOne({ _id: new ObjectId(id) });
-            return res.status(204).end();
+            res.status(204).end();
         }
 
         return res.status(400).json({ message: 'Malformed parameter "force"' });
@@ -218,45 +220,45 @@ exports.deleteLocation = async (req, res) => {
     }
 };
 
-exports.modifyEventsForLocation = async (req, res) => {
-    const { id } = req.params;
-    if (!id) {
-        return res.status(400).json({ message: 'No location ID provided' });
-    }
+// exports.modifyEventsForLocation = async (req, res) => {
+//     const { id } = req.params;
+//     if (!id) {
+//         return res.status(400).json({ message: 'No location ID provided' });
+//     }
 
-    const { addEventId, removeEventId } = req.body;
+//     const { addEventId, removeEventId } = req.body;
 
-    if (!addEventId && !removeEventId) {
-        return res
-            .status(400)
-            .json({ message: 'Provide either addEventId or removeEventId' });
-    }
+//     if (!addEventId && !removeEventId) {
+//         return res
+//             .status(400)
+//             .json({ message: 'Provide either addEventId or removeEventId' });
+//     }
 
-    try {
-        if (addEventId) {
-            await collection.updateOne(
-                { _id: new ObjectId(id) },
-                { $addToSet: { eventsId: new ObjectId(addEventId) } }
-            );
-        }
+//     try {
+//         if (addEventId) {
+//             await collection.updateOne(
+//                 { _id: new ObjectId(id) },
+//                 { $addToSet: { eventsId: new ObjectId(addEventId) } }
+//             );
+//         }
 
-        if (removeEventId) {
-            await collection.updateOne(
-                { _id: new ObjectId(id) },
-                { $pull: { eventsId: new ObjectId(removeEventId) } }
-            );
-        }
+//         if (removeEventId) {
+//             await collection.updateOne(
+//                 { _id: new ObjectId(id) },
+//                 { $pull: { eventsId: new ObjectId(removeEventId) } }
+//             );
+//         }
 
-        const updatedLocation = await collection.findOne({
-            _id: new ObjectId(id),
-        });
-        if (!updatedLocation) {
-            return res.status(404).json({ message: 'Location not found' });
-        }
+//         const updatedLocation = await collection.findOne({
+//             _id: new ObjectId(id),
+//         });
+//         if (!updatedLocation) {
+//             return res.status(404).json({ message: 'Location not found' });
+//         }
 
-        res.status(200).json(updatedLocation);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Internal server error' });
-    }
-};
+//         res.status(200).json(updatedLocation);
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).json({ message: 'Internal server error' });
+//     }
+// };

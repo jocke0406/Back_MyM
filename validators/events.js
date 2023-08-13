@@ -17,11 +17,11 @@ module.exports = {
                 },
                 startAt: {
                     bsonType: 'date',
-                    description: 'startAt must be a date.',
+                    description: 'startAt is required must be a date.',
                 },
                 endAt: {
                     bsonType: 'date',
-                    description: 'endAt must be a date.',
+                    description: 'endAt is required must be a date.',
                 },
                 description: {
                     bsonType: 'string',
