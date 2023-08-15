@@ -25,12 +25,12 @@ router.post('/', controller.createUser);
 router.patch('/:id', controller.updateUser);
 
 //DELETE /users/:id (verified)
-//router.delete('/:id', controller.deleteUser);
+router.delete('/:id', controller.deleteUser);
 
 //add /friend (verified)
-//router.patch('/:id/addFriend', controller.userAddFriend);
+router.patch('/:id/addFriend', controller.userAddFriend);
 
 // remove /friend (verified)
-//router.patch('/:id/removeFriend', controller.userRemoveFriend);
+router.patch('/:id/removeFriend', controller.userRemoveFriend);
 
 module.exports = router;

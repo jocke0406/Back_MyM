@@ -1,6 +1,8 @@
 const client = require('../utils').dbClient;
 const db = client.db(process.env.MONGO_DB_DATABASE);
 const collection = db.collection('users');
+const cercleCollection = db.collection('cercles');
+const eventCollection = db.collection('events');
 const { ObjectId } = require('mongodb');
 const Joi = require('joi');
 const bcrypt = require('bcrypt');
@@ -10,7 +12,7 @@ exports.getUsersAll = async (req, res) => {
         const users = await collection.find({}).toArray();
         res.status(200).json(users);
     } catch (error) {
-        console.log(error);
+        console.error(error);
         res.status(500).json({ message: 'Internal server error' });
     }
 };
@@ -80,7 +82,7 @@ exports.getUserFull = async (req, res) => {
 
         res.status(200).json(userFull[0]);
     } catch (error) {
-        console.log(error);
+        console.error(error);
         res.status(500).json({ message: 'Internal server error' });
     }
 };
@@ -112,7 +114,7 @@ exports.getUserFriends = async (req, res) => {
 
         res.status(200).json(friends);
     } catch (error) {
-        console.log(error);
+        console.error(error);
         res.status(500).json({ message: 'Internal server error' });
     }
 };
@@ -149,7 +151,7 @@ exports.getUserEvents = async (req, res) => {
             res.status(200).json(userEvents[0]);
         }
     } catch (error) {
-        console.log(error);
+        console.error(error);
         res.status(500).json({ message: 'Internal server error' });
     }
 };
@@ -246,7 +248,21 @@ exports.createUser = async (req, res) => {
     }
 
     try {
-        await collection.insertOne(user);
+        const result = await collection.insertOne(user);
+        const userId = result.insertId;
+        if (
+            value.student_association &&
+            value.student_association.association_id
+        ) {
+            const associationId = new ObjectId(
+                value.student_association.association_id
+            );
+
+            await cercleCollection.updateOne(
+                { _id: associationId },
+                { $addToSet: { members_ids: userId } }
+            );
+        }
         res.status(201).json(user);
     } catch (err) {
         console.error('Erreur générale :', err);
@@ -263,7 +279,6 @@ exports.updateUser = async (req, res) => {
 
     const existingUser = await collection.findOne({ _id: new ObjectId(id) });
     if (!existingUser) {
-        console.log(_id);
         return res.status(404).json({ message: 'User not found' });
     }
 
@@ -348,6 +363,32 @@ exports.updateUser = async (req, res) => {
         );
     }
 
+    if (value.student_association && value.student_association.association_id) {
+        const newAssociationId = new ObjectId(
+            value.student_association.association_id
+        );
+
+        if (
+            existingUser.student_association &&
+            String(existingUser.student_association.association_id) !==
+                String(newAssociationId)
+        ) {
+            const oldAssociationId = new ObjectId(
+                existingUser.student_association.association_id
+            );
+
+            await cercleCollection.updateOne(
+                { _id: oldAssociationId },
+                { $pull: { members_ids: id } }
+            );
+        }
+
+        await cercleCollection.updateOne(
+            { _id: newAssociationId },
+            { $addToSet: { members_ids: new ObjectId(id) } }
+        );
+    }
+
     try {
         const user = await collection.findOneAndUpdate(
             { _id: new ObjectId(id) },
@@ -361,5 +402,150 @@ exports.updateUser = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+exports.deleteUser = async (req, res) => {
+    const { id } = req.params;
+    if (!id || !ObjectId.isValid(id)) {
+        return res.status(400).json({ message: 'No or invalid id provided' });
+    }
+    const userId = new ObjectId(id);
+    try {
+        const { force } = req.query;
+
+        if (force === undefined || parseInt(force, 10) === 0) {
+            // suppression logique
+            const data = await collection.updateOne(
+                { _id: userId }, // filter
+                {
+                    $set: {
+                        deletedAt: new Date(),
+                    },
+                }
+            );
+            await cercleCollection.updateMany(
+                { members_ids: userId },
+                { $pull: { members_ids: userId } }
+            );
+            await eventCollection.updateMany(
+                { participants_ids: userId },
+                { $pull: { participants_ids: userId } }
+            );
+            await collection.updateMany(
+                { friends: userId },
+                { $pull: { friends: userId } }
+            );
+            return res.status(200).json({ message: 'deleted successfully' });
+        }
+
+        if (parseInt(force, 10) === 1) {
+            // suppression physique
+            await collection.deleteOne({ _id: new ObjectId(id) });
+            await cercleCollection.updateMany(
+                { members_ids: userId },
+                { $pull: { members_ids: userId } }
+            );
+            await eventCollection.updateMany(
+                { participants_ids: userId },
+                { $pull: { participants_ids: userId } }
+            );
+            await collection.updateMany(
+                { friends: userId },
+                { $pull: { friends: userId } }
+            );
+            return res.status(204).json();
+        }
+
+        res.status(400).json({
+            message: 'Malformed parameter "force"',
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+exports.userAddFriend = async (req, res) => {
+    const { id } = req.params;
+    if (!id || !ObjectId.isValid(id)) {
+        return res.status(400).json({ message: 'No or invalid id provided' });
+    }
+    const schema = Joi.object({
+        friendId: Joi.string().hex().length(24).required(),
+    });
+
+    const { error, value } = schema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ message: error.details[0].message });
+    }
+    const friend = await collection.findOne({
+        _id: new ObjectId(value.friendId),
+    });
+    if (!friend) {
+        return res.status(404).json({ message: 'Friend not found' });
+    }
+
+    // Vérifiez que l'utilisateur et l'ami ne sont pas la même personne
+    if (String(id) === String(value.friendId)) {
+        return res
+            .status(400)
+            .json({ message: "You can't add yourself as a friend." });
+    }
+    try {
+        const updatedUser = await collection.findOneAndUpdate(
+            { _id: new ObjectId(id) },
+
+            {
+                $addToSet: {
+                    friends: new ObjectId(value.friendId),
+                },
+                $set: { updatedAt: new Date() },
+            },
+            { returnDocument: 'after' }
+        );
+        if (!updatedUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.status(200).json(updatedUser);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            message: 'Internal server error',
+        });
+    }
+};
+
+exports.userRemoveFriend = async (req, res) => {
+    const { id } = req.params;
+    if (!id || !ObjectId.isValid(id)) {
+        return res.status(400).json({ message: 'No or invalid id provided' });
+    }
+    const schema = Joi.object({
+        friendId: Joi.string().hex().length(24).required(),
+    });
+
+    const { error, value } = schema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ message: error.details[0].message });
+    }
+
+    try {
+        const updatedUser = await collection.findOneAndUpdate(
+            { _id: new ObjectId(id) },
+            {
+                $pull: { friends: new ObjectId(value.friendId) },
+                $set: { updatedAt: new Date() },
+            }
+        );
+        if (!updatedUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.status(200).json(updatedUser);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            message: 'Internal server error',
+        });
     }
 };
