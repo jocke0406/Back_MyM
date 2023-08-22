@@ -26,7 +26,7 @@ const seed = async () => {
     const userDto = [
         {
             name: {
-                first: 'Bound',
+                first: 'MasterOfTheUnivers',
                 last: 'Js',
             },
             pseudo: '007',
