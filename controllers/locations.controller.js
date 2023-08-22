@@ -77,6 +77,16 @@ exports.getLocationFull = async (req, res) => {
                         'eventsByLocation.participants.pseudo': 1,
                     },
                 },
+		    {
+		    $group: {
+        		_id: "$_id",
+        		name: { $first: "$name" },
+       			address: { $first: "$address" },
+        		geolocalisation: { $first: "$geolocalisation" },
+        		eventsByLocation: { $push: "$eventsByLocation" }
+   		 },
+}
+
             ])
             .toArray();
         if (event.length === 0) {
