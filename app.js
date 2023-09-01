@@ -28,12 +28,6 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(helmet());
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
-app.use('/cercles', cerclesRouter);
-app.use('/events', eventsRouter);
-app.use('/locations', locationsRouter);
-app.use('/login', loginRouter);
 
 app.use(csurf());
 // catch 404 and forward to error handler
@@ -66,6 +60,12 @@ app.use((err, req, res, next) => {
         message: 'Invalid CSRF token.'
     });
 });
+app.use('/', indexRouter);
+app.use('/users', usersRouter);
+app.use('/cercles', cerclesRouter);
+app.use('/events', eventsRouter);
+app.use('/locations', locationsRouter);
+app.use('/login', loginRouter);
 
 
 module.exports = app;
