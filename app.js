@@ -11,7 +11,6 @@ var cerclesRouter = require('./routes/cercles.router');
 var eventsRouter = require('./routes/events.router');
 var locationsRouter = require('./routes/locations.router');
 var loginRouter = require('./routes/login.router');
-var csurf = require('csurf');
 var rateLimit = require("express-rate-limit");
 
 var app = express();
@@ -28,12 +27,6 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(helmet());
 
-
-app.use(csurf());
-// catch 404 and forward to error handler
-app.use(function (req, res, next) {
-    next(createError(404));
-});
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
