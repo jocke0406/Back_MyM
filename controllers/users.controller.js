@@ -403,6 +403,34 @@ exports.updateUser = async (req, res) => {
         console.error(error);
         res.status(500).json({ message: 'Internal server error' });
     }
+    try {
+        const result = await collection.insertOne(user);
+        const userId = result.ops[0]._id; // Changé de 'insertId' à 'ops[0]._id'
+
+        console.log('UserID:', userId); // Affiche l'ID du nouvel utilisateur
+
+        if (
+            value.student_association &&
+            value.student_association.association_id
+        ) {
+            const associationId = new ObjectId(
+                value.student_association.association_id
+            );
+            console.log('AssociationID:', associationId); // Affiche l'ID de l'association
+
+            const updateResult = await cercleCollection.updateOne(
+                { _id: associationId },
+                { $addToSet: { members_ids: userId } }
+            );
+
+            console.log('Update Result:', updateResult); // Affiche le résultat de la mise à jour
+        }
+
+        res.status(201).json(user);
+    } catch (err) {
+        console.error('Erreur générale :', err);
+        res.status(500).json({ message: 'Internal server error' });
+    }
 };
 
 exports.deleteUser = async (req, res) => {
