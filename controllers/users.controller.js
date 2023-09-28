@@ -249,7 +249,8 @@ exports.createUser = async (req, res) => {
 
     try {
         const result = await collection.insertOne(user);
-        const userId = result.insertId;
+
+        const userId = result.ops[0]._id;
         if (
             value.student_association &&
             value.student_association.association_id
@@ -476,6 +477,7 @@ exports.userAddFriend = async (req, res) => {
     });
 
     const { error, value } = schema.validate(req.body);
+
     if (error) {
         return res.status(400).json({ message: error.details[0].message });
     }
