@@ -249,8 +249,9 @@ exports.createUser = async (req, res) => {
 
     try {
         const result = await collection.insertOne(user);
-
-        const userId = result.ops[0]._id;
+        if (result && result.insertedId) {
+        const userId = result.insertedId;  
+        
         if (
             value.student_association &&
             value.student_association.association_id
@@ -265,6 +266,8 @@ exports.createUser = async (req, res) => {
             );
         }
         res.status(201).json(user);
+    } 
+        
     } catch (err) {
         console.error('Erreur générale :', err);
 
