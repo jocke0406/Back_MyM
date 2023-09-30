@@ -139,6 +139,15 @@ exports.getCercleEvents = async (req, res) => {
                         as: 'events',
                     },
                 },
+                { $unwind: "$events" },
+                { $match: { "events.deletedAt": { $in: [null, undefined] } } },
+                { $sort: { "events.createdAt": -1 } }, 
+                {
+                    $group: {
+                        _id: "$_id",
+                        events: { $push: "$events" }
+                    }
+                },
                 {
                     $project: {
                         _id: 0,
