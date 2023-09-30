@@ -144,7 +144,6 @@ exports.createEvent = async (req, res) => {
             { $push: { eventsId: eventId } }
         );
         if (updateResult.matchedCount === 0) {
-            // Supprimer l'événement inséré précédemment car la mise à jour de la localisation a échoué
             await collection.deleteOne({ _id: eventId });
 
             return res

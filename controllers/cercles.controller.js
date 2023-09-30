@@ -58,6 +58,7 @@ exports.getCerclesMembers = async (req, res) => {
                     $project: {
                         _id: 0,
                         members: {
+                            _id:1,
                             pseudo: 1,
                             email: 1,
                             name: 1,
@@ -152,6 +153,7 @@ exports.getCercleEvents = async (req, res) => {
                     $project: {
                         _id: 0,
                         events: {
+                            _id:1,
                             name: 1,
                             startAt: 1,
                             endAt: 1,
