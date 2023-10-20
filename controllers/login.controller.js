@@ -160,8 +160,6 @@ exports.forgotPassword = async (req, res) => {
             return res.status(200).json({ message: 'E-mail de réinitialisation envoyé' });
         }
     });
-
-    res.status(200).json({ message: 'E-mail de réinitialisation envoyé' });
 };
 
 exports.reinitializePassword = async (req, res) => {
