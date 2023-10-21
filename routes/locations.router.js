@@ -1,26 +1,26 @@
 var express = require('express');
 var router = express.Router();
+const authenticateJWT = require('./authenticateJWT.js');
 
 const controller = require('../controllers/locations.controller');
 
 //GET /locations (verified)
-router.get('/', controller.getLocationsAll);
+router.get('/', authenticateJWT, controller.getLocationsAll);
 
 //GET /locations/:id (verified)
-router.get('/:id', controller.getLocationsOne);
+router.get('/:id', authenticateJWT, controller.getLocationsOne);
 
 //GET /locations/:id full with events (verified)
-router.get('/:id/full', controller.getLocationFull);
+router.get('/:id/full', authenticateJWT, controller.getLocationFull);
 
 //POST /locations (verified)
-router.post('/', controller.createLocation);
+router.post('/', authenticateJWT, controller.createLocation);
 
 //PATCH /locations/:id (verified)
-router.patch('/:id', controller.updateLocation);
+router.patch('/:id', authenticateJWT, controller.updateLocation);
 
 //DELETE /locations/:id (verified)
-router.delete('/:id', controller.deleteLocation);
+router.delete('/:id', authenticateJWT, controller.deleteLocation);
 
-//PATCH locations/:id/events Supprime un événement spécifique d'une location
-//router.patch('/:id/events', controller.modifyEventsForLocation);
+
 module.exports = router;

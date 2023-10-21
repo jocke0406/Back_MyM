@@ -1,30 +1,31 @@
 var express = require('express');
 var router = express.Router();
+const authenticateJWT = require('./authenticateJWT.js');
 
 const controller = require('../controllers/events.controller');
 
 //GET /events (verified)
-router.get('/', controller.getEventsAll);
+router.get('/', authenticateJWT, controller.getEventsAll);
 
 //GET /events/:id (verified)
-router.get('/:id', controller.getEventsOne);
+router.get('/:id', authenticateJWT, controller.getEventsOne);
 
 //GET /events/:id with location / organizer / participants (verified)
-router.get('/:id/full', controller.getEventFull);
+router.get('/:id/full', authenticateJWT, controller.getEventFull);
 
 //POST /events (verified)
-router.post('/', controller.createEvent);
+router.post('/', authenticateJWT, controller.createEvent);
 
 //PATCH /events/:id (verified)
-router.patch('/:id', controller.updateEvent);
+router.patch('/:id', authenticateJWT, controller.updateEvent);
 
 //DELETE /events/:id (verified)
-router.delete('/:id', controller.deleteEvent);
+router.delete('/:id', authenticateJWT, controller.deleteEvent);
 
 //PATCH /events/:id/addParticipant (verified)
-router.patch('/:id/addParticipant', controller.eventAddParticipant);
+router.patch('/:id/addParticipant', authenticateJWT, controller.eventAddParticipant);
 
 //PATCH /events/:id/removeParticipant (verified)
-router.patch('/:id/removeParticipant', controller.eventRemoveParticipant);
+router.patch('/:id/removeParticipant', authenticateJWT, controller.eventRemoveParticipant);
 
 module.exports = router;
