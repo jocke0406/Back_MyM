@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 const authenticateJWT = require('./authenticateJWT.js');
+const authenticateAdminJWT = require('./authenticateJWT.js');
 const controller = require('../controllers/cercles.controller');
 
 //GET /cercles (verified)
@@ -19,12 +20,12 @@ router.get('/:id/location', authenticateJWT, controller.getCercleLocation);
 router.get('/:id/events', authenticateJWT, controller.getCercleEvents);
 
 //POST / cercles (verified)
-router.post('/', authenticateJWT, controller.createCercle);
+router.post('/', authenticateAdminJWT, controller.createCercle);
 
 //PATCH /cercles/:id (verified)
-router.patch('/:id', authenticateJWT, controller.updateCercle);
+router.patch('/:id', authenticateAdminJWT, controller.updateCercle);
 
 //DELETE /cercles/:id (verified)
-router.delete('/:id', authenticateJWT, controller.deleteCercle);
+router.delete('/:id', authenticateAdminJWT, controller.deleteCercle);
 
 module.exports = router;

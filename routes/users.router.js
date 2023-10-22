@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 const authenticateJWT = require('./authenticateJWT.js');
-
+const authenticateAdminJWT = require('./authenticateJWT.js');
 const controller = require('../controllers/users.controller');
 
 //GET / users(verified);

@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 const authenticateJWT = require('./authenticateJWT.js');
-
+const authenticateAdminJWT = require('./authenticateJWT.js');
 const controller = require('../controllers/events.controller');
 
 //GET /events (verified)
@@ -14,13 +14,13 @@ router.get('/:id', authenticateJWT, controller.getEventsOne);
 router.get('/:id/full', authenticateJWT, controller.getEventFull);
 
 //POST /events (verified)
-router.post('/', authenticateJWT, controller.createEvent);
+router.post('/', authenticateAdminJWT, controller.createEvent);
 
 //PATCH /events/:id (verified)
-router.patch('/:id', authenticateJWT, controller.updateEvent);
+router.patch('/:id', authenticateAdminJWT, controller.updateEvent);
 
 //DELETE /events/:id (verified)
-router.delete('/:id', authenticateJWT, controller.deleteEvent);
+router.delete('/:id', authenticateAdminJWT, controller.deleteEvent);
 
 //PATCH /events/:id/addParticipant (verified)
 router.patch('/:id/addParticipant', authenticateJWT, controller.eventAddParticipant);
