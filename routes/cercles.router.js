@@ -5,7 +5,7 @@ const authenticateAdminJWT = require('./authenticateJWT.js');
 const controller = require('../controllers/cercles.controller');
 
 //GET /cercles (verified)
-router.get('/', authenticateJWT, controller.getCerclesAll);
+router.get('/', controller.getCerclesAll);
 
 //GET /cercles/:id (verified)
 router.get('/:id', authenticateJWT, controller.getCerclesOne);
