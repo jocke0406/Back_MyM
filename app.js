@@ -5,6 +5,7 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var cors = require('cors');
 var helmet = require('helmet');
+var csrf = require('csurf');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users.router');
 var cerclesRouter = require('./routes/cercles.router');
@@ -12,25 +13,31 @@ var eventsRouter = require('./routes/events.router');
 var locationsRouter = require('./routes/locations.router');
 var loginRouter = require('./routes/login.router');
 var rateLimit = require("express-rate-limit");
-
 var app = express();
-
+var corsOptions = {
+    origin: process.env.FRONT_URL,
+    credentials: true,
+    methods: ['GET', 'PATCH', 'OPTIONS', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+};
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
-
-app.use(cors());
+app.use(cookieParser());
+app.use(cors(corsOptions));
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(helmet());
 
 
+
+
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limiter chaque IP à 100 requêtes par fenêtre
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100 // limiter chaque IP à 100 requêtes par fenêtre
 });
 
 app.use(limiter);
@@ -46,13 +53,9 @@ app.use(function (err, req, res, next) {
     res.render('error');
 });
 
-app.use((err, req, res, next) => {
-    if (err.code !== 'EBADCSRFTOKEN') return next(err)
-        res.status(403).json({
-        status: 'error',
-        message: 'Invalid CSRF token.'
-    });
-});
+
+
+
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/cercles', cerclesRouter);

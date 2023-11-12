@@ -3,11 +3,11 @@ var router = express.Router();
 const authenticateJWT = require('./authenticateJWT.js');
 const authenticateAdminJWT = require('./authenticateJWT.js');
 const controller = require('../controllers/cercles.controller');
-
+const csrfProtection = require('csurf')({ cookie: true });
 //GET /cercles (verified)
 router.get('/', controller.getCerclesAll);
 
-//GET /cercles/:id (verified)
+//GET /cercles/:id (verified)s
 router.get('/:id', authenticateJWT, controller.getCerclesOne);
 
 //GET /cercles/:id/members (verified)
